@@ -43,14 +43,14 @@ class Dataset:
             end = self.latest
         elif end > self.latest:
             self.extend(end, before=False, empty=empty)
-        self.features.loc[start:end][features] = None if empty else True
+        self.features.loc[start:end][features] = None if empty else 1
 
     def extend(self, to: datetime, before=False, empty=False):
         if before:
             ix = pd.date_range(start=to, end=self.features.last(1).index, freq=self._freq)
         else:
             ix = pd.date_range(start=self.features.first(1).index, end=to, freq=self._freq)
-        self.features.reindex(ix, fill_value=None if empty else True)
+        self.features.reindex(ix, fill_value=None if empty else 1)
 
     def __add__(self, other):
         if not isinstance(other, type(self)):
@@ -68,11 +68,12 @@ class Dataset:
 
 def create_dataset(
         features: List[str],
-        empty: bool = True,
+        empty: bool = False,
         start: Any = "2000-01-01",
-        end: Any = "2000-01-31",
+        end: Any = "2001-01-01",
         freq="1h"):
-    dtypes = {f: bool for f in features}
-    features = dask.datasets.timeseries(start, end, freq, "1Y", dtypes)
-    features.replace(value=None if empty else True, inplace=True)
-    return Dataset(features, freq)
+    dtypes = {f: int for f in features}
+    df = dask.datasets.timeseries(start, end, freq, "1M", dtypes)
+    if not empty:
+        df.fillna(1)
+    return Dataset(df, freq)
