@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Any, Union, Optional
 import pandas as pd
-import dask
+import numpy as np
 
 
 class Dataset:
@@ -57,7 +57,7 @@ class Dataset:
             raise Exception(f"{other} is not of type Dataset.")
         if not self._freq == other._freq:
             raise Exception(f"Frequencies do not match: self - {self._freq}, other - {other._freq}")
-        return Dataset(self.features.merge(other.features, sort=True), self._freq)
+        return Dataset(self.features.merge(other.features, how="outer", on="index", sort=True), self._freq)
 
     def __copy__(self):
         return Dataset(self.features.copy(deep=True), self._freq)
@@ -67,13 +67,12 @@ class Dataset:
 
 
 def create_dataset(
-        features: List[str],
+        columns: List[str],
         empty: bool = False,
         start: Any = "2000-01-01",
-        end: Any = "2001-01-01",
-        freq="1h"):
-    dtypes = {f: int for f in features}
-    df = dask.datasets.timeseries(start, end, freq, "1M", dtypes)
-    if not empty:
-        df.fillna(1)
+        end: Any = "2000-03-01",
+        freq="1D"):
+    index = pd.date_range(start=start, end=end, freq=freq)
+    data = None if empty else np.ones([len(index), len(columns)])
+    df = pd.DataFrame(data=data, columns=columns, index=index, dtype=np.int8)
     return Dataset(df, freq)
