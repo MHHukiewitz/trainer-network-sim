@@ -1,69 +1,72 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Any, Union, Optional
 import pandas as pd
 import numpy as np
 
 
-class Dataset:
-    features: pd.DataFrame
-    _freq: str
+class TimeSeries:
+    df: pd.DataFrame
+    freq: str
 
-    def __init__(self,
-                 features: pd.DataFrame,
-                 freq="1h"):
-        self._freq = freq
-        self.features = features
-
-    @property
-    def earliest(self) -> Optional[datetime]:
-        return self.features.first_valid_index()
+    def __init__(self, df: pd.DataFrame, freq="1D"):
+        self.freq = freq
+        self.df = df
+        self.only_date = pd.to_timedelta(freq) >= pd.to_timedelta("1D")
 
     @property
-    def latest(self) -> Optional[datetime]:
-        return self.features.last_valid_index()
+    def datasets(self) -> [str]:
+        return self.df.columns.to_list()
+
+    @property
+    def earliest(self) -> Optional[Union[date, datetime]]:
+        earliest: Optional[datetime] = self.df.first_valid_index()
+        if earliest:
+            return earliest.date() if self.only_date else earliest
+        return None
+
+    @property
+    def latest(self) -> Optional[Union[date, datetime]]:
+        latest: Optional[datetime] = self.df.last_valid_index()
+        if latest:
+            return latest.date() if self.only_date else latest
+        return None
+
+    def add_observations(self):
+        """Adds a new observation at the end of the dataframe for all columns."""
+        date = self.latest + pd.to_timedelta(self.freq)
+        self.fill(date, date)
 
     def fill(self,
-             features: [str],
              start: Union[datetime, str] = None,
              end: Union[datetime, str] = None,
-             empty: bool = False):
-        """
-        fills an interval with given features
-        :param features:
-        :param start:
-        :param end:
-        :param empty:
-        :return:
-        """
-        if start is None:
-            start = self.earliest
-        elif start < self.earliest:
-            self.extend(start, before=True, empty=empty)
-        if end is None:
-            end = self.latest
-        elif end > self.latest:
-            self.extend(end, before=False, empty=empty)
-        self.features.loc[start:end][features] = None if empty else 1
+             features: [str] = None):
+        start = start if start else self.earliest
+        end = end if end else self.latest
+        features = features if features else self.df.columns
+        self.df = self.get_extended_df(start, end)
+        self.df = self.df.loc[start:end, features].add(1)
 
-    def extend(self, to: datetime, before=False, empty=False):
-        if before:
-            ix = pd.date_range(start=to, end=self.features.last(1).index, freq=self._freq)
-        else:
-            ix = pd.date_range(start=self.features.first(1).index, end=to, freq=self._freq)
-        self.features.reindex(ix, fill_value=None if empty else 1)
+    def get_extended_df(self, start: Union[datetime, str] = None, end: Union[datetime, str] = None) -> pd.DataFrame:
+        start = start if start < self.earliest else self.earliest
+        end = end if end > self.latest else self.latest
+        return self.df.reindex(pd.date_range(start=start, end=end, freq=self.freq), fill_value=0)
 
-    def __add__(self, other):
+    def __add__(self, other) -> 'TimeSeries':
+        self.check_other(other)
+        other: TimeSeries
+        return TimeSeries(self.df.add(other.df, fill_value=0), freq=self.freq)
+
+    def check_other(self, other):
         if not isinstance(other, type(self)):
-            raise Exception(f"{other} is not of type Dataset.")
-        if not self._freq == other._freq:
-            raise Exception(f"Frequencies do not match: self - {self._freq}, other - {other._freq}")
-        return Dataset(self.features.merge(other.features, how="outer", on="index", sort=True), self._freq)
+            raise Exception(f"{other} is not of type {type(self)}.")
+        if not self.freq == other.freq:
+            raise Exception(f"Frequencies do not match: self - {self.freq}, other - {other.freq}")
 
     def __copy__(self):
-        return Dataset(self.features.copy(deep=True), self._freq)
+        return TimeSeries(self.df.copy(deep=True), self.freq)
 
     def __getitem__(self, item):
-        return Dataset(self.features.loc[item], self._freq)
+        return TimeSeries(self.df.loc[item], self.freq)
 
 
 def create_dataset(
@@ -75,4 +78,4 @@ def create_dataset(
     index = pd.date_range(start=start, end=end, freq=freq)
     data = None if empty else np.ones([len(index), len(columns)])
     df = pd.DataFrame(data=data, columns=columns, index=index, dtype=np.int8)
-    return Dataset(df, freq)
+    return TimeSeries(df, freq)
