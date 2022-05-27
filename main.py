@@ -12,9 +12,11 @@ def main():
     net.add_node(c)
     net.add_node(n)
     net.print_nodes()
+    c.receive_data(n.own_data)
     net.tick()
     net.print_nodes()
-    print(net.earliest, net.latest)
+    c.receive_data(n.own_data)
+    net.print_nodes()
 
 
 # Press the green button in the gutter to run the script.

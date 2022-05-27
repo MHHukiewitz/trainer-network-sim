@@ -4,8 +4,6 @@ from typing import Optional
 import numpy as np
 from datetime import datetime
 
-from numpy import datetime64
-
 from data import TimeSeries
 
 
@@ -43,9 +41,9 @@ class Node:
 
     def receive_data(self, data: TimeSeries):
         if self.received_data:
-            self.received_data = self.received_data + data
+            self.received_data = self.received_data + data.__copy__()
         else:
-            self.received_data = data
+            self.received_data = data.__copy__()
 
     def add_own_data(self, data: TimeSeries):
         if self.own_data:
