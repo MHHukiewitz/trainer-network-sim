@@ -1,17 +1,14 @@
+import numpy as np
+
 from typing import OrderedDict
+
+from numpy import datetime64
 
 from node import Node
 
-class NodesDict(OrderedDict):
-    def __getitem__(self, item) -> Node:
-        return super(self).__getitem__(item)
-
-    def __setitem__(self, key, value: Node):
-        return super(NodesDict, self).__setitem__(key, value)
-
 
 class Network:
-    nodes: NodesDict = {}
+    nodes: OrderedDict[str, Node] = {}
 
     def add_node(self, node: Node):
         self.nodes[node.name] = node
@@ -23,3 +20,15 @@ class Network:
     def print_nodes(self):
         for node in self.nodes.values():
             print(node)
+
+    @property
+    def earliest(self):
+        array = [node.earliest for node in self.nodes.values()]
+        return np.min(np.array(array, dtype=datetime64))
+
+    @property
+    def latest(self):
+        return np.max(np.array([node.latest for node in self.nodes.values()], dtype=datetime64))
+
+    def get_intervals(self):
+        return

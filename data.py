@@ -44,7 +44,7 @@ class TimeSeries:
         end = end if end else self.latest
         features = features if features else self.df.columns
         self.df = self.get_extended_df(start, end)
-        self.df = self.df.loc[start:end, features].add(1)
+        self.df.loc[start:end, features] = self.df.loc[start:end, features].add(1)
 
     def get_extended_df(self, start: Union[datetime, str] = None, end: Union[datetime, str] = None) -> pd.DataFrame:
         start = start if start < self.earliest else self.earliest

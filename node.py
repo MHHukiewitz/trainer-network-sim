@@ -1,6 +1,11 @@
 import hashlib
 from typing import Optional
 
+import numpy as np
+from datetime import datetime
+
+from numpy import datetime64
+
 from data import TimeSeries
 
 
@@ -22,6 +27,19 @@ class Node:
         if self.own_data and self.received_data:
             assert self.own_data.freq == self.received_data.freq
         return self.own_data.freq
+
+    @property
+    def earliest(self):
+        earliest = np.min(np.array([self.own_data.earliest if self.own_data else datetime.max,
+                                self.received_data.earliest if self.received_data else datetime.max],
+                               dtype='datetime64'))
+        return earliest
+
+    @property
+    def latest(self):
+        return np.max(np.array([self.own_data.latest if self.own_data else datetime.min,
+                                  self.received_data.latest if self.received_data else datetime.min],
+                                 dtype='datetime64'))
 
     def receive_data(self, data: TimeSeries):
         if self.received_data:
@@ -48,4 +66,3 @@ class Node:
         else:
             received_data = "No received data."
         return f"Node [{self.name}] with\n  {own_data}\n  {received_data}"
-
