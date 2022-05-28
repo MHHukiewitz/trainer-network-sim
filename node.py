@@ -1,10 +1,10 @@
-import hashlib
-from typing import Optional
+import random
+from typing import Optional, List
 
 import numpy as np
 from datetime import datetime
 
-from data import TimeSeries
+from data import TimeSeries, create_dataset
 from utils import words
 
 
@@ -65,3 +65,17 @@ class Node:
         else:
             received_data = "No received data."
         return f"Node \"{self.name}\" with\n  {own_data}\n  {received_data}"
+
+
+def random_nodes(nodes_cnt: int,
+                 features_cnt: int,
+                 start: datetime = "2000-01-01",
+                 to: datetime = "2000-02-01") -> List[Node]:
+    nodes: List[Node] = []
+    for i in range(nodes_cnt):
+        node = Node()
+        for k in range(features_cnt):
+            name = random.choice(words)
+            node.add_own_data(create_dataset(columns=[name], start=start, end=to))
+        nodes.append(node)
+    return nodes
