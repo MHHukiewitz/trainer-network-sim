@@ -31,7 +31,7 @@ class TimeSeries:
             return latest.date() if self.only_date else latest
         return None
 
-    def add_observations(self):
+    def add_observation(self):
         """Adds a new observation at the end of the dataframe for all columns."""
         date = self.latest + pd.to_timedelta(self.freq)
         self.fill(date, date)

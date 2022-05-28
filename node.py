@@ -4,6 +4,8 @@ from typing import Optional, List
 import numpy as np
 from datetime import datetime
 
+import pandas as pd
+
 from data import TimeSeries, create_dataset
 from utils import words
 
@@ -11,6 +13,8 @@ from utils import words
 class Node:
     own_data: Optional[TimeSeries]
     received_data: Optional[TimeSeries]
+    assigned_start: Optional[datetime]
+    assigned_end: Optional[datetime]
 
     def __init__(self, own_data: TimeSeries = None):
         self.own_data = own_data
@@ -52,8 +56,12 @@ class Node:
         else:
             self.own_data = data
 
+    def assign_interval(self, start, end):
+        self.assigned_start = pd.to_datetime(start)
+        self.assigned_end = pd.to_datetime(end)
+
     def tick(self):
-        self.own_data.add_observations()
+        self.own_data.add_observation()
 
     def __str__(self):
         if self.own_data:
