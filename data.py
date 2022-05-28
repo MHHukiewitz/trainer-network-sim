@@ -66,7 +66,7 @@ class TimeSeries:
         return TimeSeries(self.df.copy(deep=True), self.freq)
 
     def __getitem__(self, item):
-        return TimeSeries(self.df.loc[item], self.freq)
+        return TimeSeries(pd.DataFrame(self.df[item]), self.freq)
 
 
 def create_dataset(

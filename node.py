@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 
 from data import TimeSeries, create_dataset
-from utils import words
+from words import words
 
 
 class Node:
@@ -56,19 +56,19 @@ class Node:
         else:
             self.own_data = data
 
-    def assign_interval(self, start, end):
-        self.assigned_start = pd.to_datetime(start)
-        self.assigned_end = pd.to_datetime(end)
+    # TODO: To simulate keeping data on-premise
+    def send_data(self, dataset: str, to: str):
+        pass
 
     def tick(self):
         self.own_data.add_observation()
 
     def __str__(self):
-        if self.own_data:
+        if self.own_data is not None:
             own_data = f"Own data: {self.own_data.datasets} from {self.own_data.earliest} til {self.own_data.latest}"
         else:
             own_data = "No own data."
-        if self.received_data:
+        if self.received_data is not None:
             received_data = f"Received: {self.received_data.datasets} with earliest on {self.received_data.earliest} and latest on {self.received_data.latest}"
         else:
             received_data = "No received data."
@@ -83,7 +83,6 @@ def random_nodes(nodes_cnt: int,
     for i in range(nodes_cnt):
         node = Node()
         for k in range(features_cnt):
-            name = random.choice(words)
-            node.add_own_data(create_dataset(columns=[name], start=start, end=to))
+            node.add_own_data(create_dataset(columns=[f"{node.name}-{k + 1}"], start=start, end=to))
         nodes.append(node)
     return nodes

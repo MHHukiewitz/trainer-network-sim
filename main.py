@@ -9,8 +9,8 @@ def main():
 
     print(net.tree)
     print(net.tree.left_to_right)
-
-    net.tick()
+    print(net.get_all_dataset_names())
+    net.distribute_dataset(net.get_all_dataset_names()[0])
     net.print_nodes()
 
 
