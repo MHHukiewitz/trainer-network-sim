@@ -5,6 +5,7 @@ import numpy as np
 from datetime import datetime
 
 from data import TimeSeries
+from utils import words
 
 
 class Node:
@@ -17,7 +18,7 @@ class Node:
 
     @property
     def name(self):
-        return "0x" + hashlib.sha1(str(hash(self)).encode('ascii')).hexdigest()
+        return words[hash(self) % len(words)]
 
     @property
     def freq(self):
@@ -29,19 +30,19 @@ class Node:
     @property
     def earliest(self):
         earliest = np.min(np.array([self.own_data.earliest if self.own_data else datetime.max,
-                                self.received_data.earliest if self.received_data else datetime.max],
-                               dtype='datetime64'))
+                                    self.received_data.earliest if self.received_data else datetime.max],
+                                   dtype='datetime64'))
         return earliest
 
     @property
     def latest(self):
         return np.max(np.array([self.own_data.latest if self.own_data else datetime.min,
-                                  self.received_data.latest if self.received_data else datetime.min],
-                                 dtype='datetime64'))
+                                self.received_data.latest if self.received_data else datetime.min],
+                               dtype='datetime64'))
 
     def receive_data(self, data: TimeSeries):
         if self.received_data:
-            self.received_data = self.received_data + data.__copy__()
+            self.received_data = self.received_data + data
         else:
             self.received_data = data.__copy__()
 
@@ -63,4 +64,4 @@ class Node:
             received_data = f"Received: {self.received_data.datasets} with earliest on {self.received_data.earliest} and latest on {self.received_data.latest}"
         else:
             received_data = "No received data."
-        return f"Node [{self.name}] with\n  {own_data}\n  {received_data}"
+        return f"Node \"{self.name}\" with\n  {own_data}\n  {received_data}"
