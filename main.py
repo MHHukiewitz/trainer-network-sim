@@ -11,7 +11,7 @@ def main():
     print(f"Simulating distribution of dataset {dataset}")
     net.distribute_dataset(dataset)
     net.print_dataset_distribution(dataset)
-    for i in range(7):
+    for i in range(6):
         if i % 50 == 0:
             print(f"Iterated {i} days with {len(net.nodes)} nodes...")
         if i % 1 == 0:
