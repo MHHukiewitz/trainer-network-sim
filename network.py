@@ -1,4 +1,5 @@
 from typing import OrderedDict, Union, Dict, List, Set, Tuple, Optional
+
 import numpy as np
 import pandas as pd
 from numpy import datetime64
@@ -35,10 +36,6 @@ class Network:
         for node in self.nodes.values():
             node.tick()
 
-    def print_nodes(self):
-        for node in self.nodes.values():
-            print(node)
-
     @property
     def earliest(self):
         array = [node.earliest for node in self.nodes.values()]
@@ -70,3 +67,25 @@ class Network:
         data = self.get_dataset(dataset)
         for receiver, (start, end) in self.get_intervals().items():
             self.nodes[receiver].receive_data(data[start:end])
+
+    def print_nodes(self):
+        for node in self.nodes.values():
+            print(node)
+
+    def print_dataset_distribution(self, dataset: str):
+        data = self.get_dataset(dataset)
+        intervals = self.get_intervals()
+        print(f"Printing distribution of dataset {dataset}")
+        for node in self.nodes.values():
+            if node.received_data is not None:
+                bar = ""
+                received = node.received_data[dataset].df.reindex(
+                    pd.date_range(start=data.earliest, end=data.latest, freq=data.freq),
+                    fill_value=0
+                )
+                for index in data.df.index:
+                    if intervals[node.name][0] <= index < intervals[node.name][1]:
+                        bar += "█"
+                    else:
+                        bar += "▒" if (received.loc[index] > 0).all() else "-"
+                print(f"[{data.earliest}]{bar}[{data.latest}] -> {node.name}")

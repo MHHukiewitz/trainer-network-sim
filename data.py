@@ -68,6 +68,9 @@ class TimeSeries:
     def __getitem__(self, item):
         return TimeSeries(pd.DataFrame(self.df[item]), self.freq)
 
+    def __len__(self):
+        return len(self.df)
+
 
 def create_dataset(
         columns: List[str],
