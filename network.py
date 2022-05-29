@@ -84,7 +84,7 @@ class Network:
                     fill_value=0
                 )
                 for index in data.df.index:
-                    if intervals[node.name][0] <= index < intervals[node.name][1]:
+                    if intervals[node.name][0] <= index <= intervals[node.name][1]:
                         bar += "█"
                     else:
                         bar += "▒" if (received.loc[index] > 0).all() else "-"
