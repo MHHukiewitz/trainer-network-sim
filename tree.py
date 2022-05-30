@@ -46,7 +46,7 @@ class IntervalTreeNode(TreeNode):
 
 
 #TODO: Build very balanced
-def build(values: NodeValueList) -> Optional[IntervalTreeNode]:
+def build_l_to_r(values: NodeValueList) -> Optional[IntervalTreeNode]:
     nodes = [None if v is None else IntervalTreeNode(v) for v in values]
 
     for index in range(1, len(nodes)):
@@ -59,6 +59,23 @@ def build(values: NodeValueList) -> Optional[IntervalTreeNode]:
                     "parent node missing at index {}".format(parent_index)
                 )
             setattr(parent, _ATTR_LEFT if index % 2 else _ATTR_RIGHT, node)
+            node.parent = parent
+
+    return nodes[0] if nodes else None
+
+def build_r_to_l(values: NodeValueList) -> Optional[IntervalTreeNode]:
+    nodes = [None if v is None else IntervalTreeNode(v) for v in values]
+
+    for index in range(1, len(nodes)):
+        node = nodes[index]
+        if node is not None:
+            parent_index = (index - 1) // 2
+            parent = nodes[parent_index]
+            if parent is None:
+                raise NodeNotFoundError(
+                    "parent node missing at index {}".format(parent_index)
+                )
+            setattr(parent, _ATTR_RIGHT if index % 2 else _ATTR_LEFT, node)
             node.parent = parent
 
     return nodes[0] if nodes else None

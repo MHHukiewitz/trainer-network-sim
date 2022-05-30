@@ -7,20 +7,30 @@ from datetime import datetime, date
 
 from data import TimeSeries
 from node import Node
-from tree import IntervalTreeNode, build
+from tree import IntervalTreeNode, build_r_to_l, build_l_to_r
 
 
 class Network:
-    nodes: OrderedDict[str, Node] = OrderedDict[str, Node]()
+    nodes: OrderedDict[str, Node]
     current_date: datetime
-    owner_lookup: Dict[str, Node] = {}
+    owner_lookup: Dict[str, Node]
+    tree_type: str
 
-    def __init__(self, current_date: Union[str, datetime64, datetime, date] = datetime.now()):
+    def __init__(self, current_date: Union[str, datetime64, datetime, date] = datetime.now(), tree_type: str = "ltor"):
         self.current_date = pd.to_datetime(current_date)
+        self.tree_type = tree_type
+        self.nodes = OrderedDict[str, Node]()
+        self.owner_lookup = {}
+
+    def get_tree(self) -> IntervalTreeNode:
+        if self.tree_type == "rtol":
+            return build_r_to_l(self.nodes.keys())
+        elif self.tree_type == "ltor":
+            return build_l_to_r(self.nodes.keys())
 
     @property
     def tree(self) -> IntervalTreeNode:
-        return build(self.nodes.keys())
+        return self.get_tree()
 
     def add_node(self, node: Node):
         self.nodes[node.name] = node
@@ -31,6 +41,9 @@ class Network:
     def add_nodes(self, nodes: [Node]):
         for node in nodes:
             self.add_node(node)
+
+    def remove_node(self, node: str):
+        del self.nodes[node]
 
     def tick(self):
         for node in self.nodes.values():
@@ -49,7 +62,7 @@ class Network:
         """Returns a datetime interval to be assigned to every node"""
         intervals: (datetime, datetime) = {}
         date_range = pd.date_range(self.earliest, self.latest, len(self.nodes) + 1)
-        for i, node in enumerate(self.tree.left_to_right):
+        for i, node in enumerate(self.get_tree().left_to_right):
             intervals[node.value] = (date_range[i], date_range[i+1])
         return intervals
 
