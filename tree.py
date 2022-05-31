@@ -1,3 +1,4 @@
+import random
 from typing import List, Optional
 
 from binarytree import Node as TreeNode, NodeValue, NodeNotFoundError, _ATTR_LEFT, _ATTR_RIGHT, NodeValueList
@@ -45,8 +46,7 @@ class IntervalTreeNode(TreeNode):
         return nodes
 
 
-#TODO: Build very balanced
-def build_l_to_r(values: NodeValueList) -> Optional[IntervalTreeNode]:
+def build_ordered(values: NodeValueList, direction: str = "ltor") -> Optional[IntervalTreeNode]:
     nodes = [None if v is None else IntervalTreeNode(v) for v in values]
 
     for index in range(1, len(nodes)):
@@ -58,24 +58,37 @@ def build_l_to_r(values: NodeValueList) -> Optional[IntervalTreeNode]:
                 raise NodeNotFoundError(
                     "parent node missing at index {}".format(parent_index)
                 )
-            setattr(parent, _ATTR_LEFT if index % 2 else _ATTR_RIGHT, node)
+            if direction == "ltor":
+                setattr(parent, _ATTR_LEFT if index % 2 else _ATTR_RIGHT, node)
+            else:
+                setattr(parent, _ATTR_RIGHT if index % 2 else _ATTR_LEFT, node)
             node.parent = parent
 
     return nodes[0] if nodes else None
 
-def build_r_to_l(values: NodeValueList) -> Optional[IntervalTreeNode]:
+
+def build_balanced(values: NodeValueList, direction: str = "ltor") -> Optional[IntervalTreeNode]:
     nodes = [None if v is None else IntervalTreeNode(v) for v in values]
-
-    for index in range(1, len(nodes)):
-        node = nodes[index]
+    root = nodes[0]
+    for i in range(1, len(nodes)):
+        node = nodes[i]
         if node is not None:
-            parent_index = (index - 1) // 2
-            parent = nodes[parent_index]
-            if parent is None:
-                raise NodeNotFoundError(
-                    "parent node missing at index {}".format(parent_index)
-                )
-            setattr(parent, _ATTR_RIGHT if index % 2 else _ATTR_LEFT, node)
+            parent = find_shallowest_branch(root)
+            if direction == "random":
+                direction = random.choice(["ltor", "rtol"])
+            if direction == "ltor":
+                setattr(parent, _ATTR_LEFT if parent.left is None else _ATTR_RIGHT, node)
+            else:
+                setattr(parent, _ATTR_RIGHT if parent.right is None else _ATTR_LEFT, node)
             node.parent = parent
 
     return nodes[0] if nodes else None
+
+
+def find_shallowest_branch(node: IntervalTreeNode) -> IntervalTreeNode:
+    while node.leaf_count >= 2:
+        if node.left.leaf_count > node.right.leaf_count:
+            node = node.right
+        else:
+            node = node.left
+    return node

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import OrderedDict, Union, Dict, List, Set, Tuple, Optional
 
 import numpy as np
@@ -7,36 +8,65 @@ from datetime import datetime, date
 
 from data import TimeSeries
 from node import Node
-from tree import IntervalTreeNode, build_r_to_l, build_l_to_r
+from tree import IntervalTreeNode, build_ordered, build_balanced
+
+
+class TreeType(Enum):
+    ordered_rtol = 1  # breadth-first from right to left
+    ordered_ltor = 2  # breadth-first from left to right
+    balanced_rtol = 3  # shallowest branch first from right to left
+    balanced_ltor = 4  # shallowest branch first from left to right
+    balanced_random = 5  # shallowest branch first, randomly chosen direction
 
 
 class Network:
     nodes: OrderedDict[str, Node]
     current_date: datetime
     owner_lookup: Dict[str, Node]
-    tree_type: str
+    tree_type: TreeType
+    _tree: Optional[IntervalTreeNode]
 
-    def __init__(self, current_date: Union[str, datetime64, datetime, date] = datetime.now(), tree_type: str = "ltor"):
+    def __init__(self,
+                 current_date: Union[str, datetime64, datetime, date] = datetime.now(),
+                 tree_type: TreeType = TreeType.balanced_ltor):
         self.current_date = pd.to_datetime(current_date)
         self.tree_type = tree_type
         self.nodes = OrderedDict[str, Node]()
         self.owner_lookup = {}
 
-    def get_tree(self) -> IntervalTreeNode:
-        if self.tree_type == "rtol":
-            return build_r_to_l(self.nodes.keys())
-        elif self.tree_type == "ltor":
-            return build_l_to_r(self.nodes.keys())
+    def generate_tree(self):
+        if self.tree_type == TreeType.ordered_rtol:
+            self._tree = build_ordered(self.nodes.keys(), "rtol")
+        elif self.tree_type == TreeType.ordered_ltor:
+            self._tree = build_ordered(self.nodes.keys(), "ltor")
+        elif self.tree_type == TreeType.balanced_rtol:
+            self._tree = build_balanced(self.nodes.keys(), "rtol")
+        elif self.tree_type == TreeType.balanced_ltor:
+            self._tree = build_balanced(self.nodes.keys(), "ltor")
+        elif self.tree_type == TreeType.balanced_random:
+            self._tree = build_balanced(self.nodes.keys(), "random")  # TODO: Lock in previous choices
 
     @property
     def tree(self) -> IntervalTreeNode:
-        return self.get_tree()
+        if self._tree is None:
+            self.generate_tree()
+        return self._tree
+
+    @property
+    def earliest(self):
+        array = [node.earliest for node in self.nodes.values()]
+        return np.min(np.array(array, dtype=datetime64))
+
+    @property
+    def latest(self):
+        return np.max(np.array([node.latest for node in self.nodes.values()], dtype=datetime64))
 
     def add_node(self, node: Node):
         self.nodes[node.name] = node
         for dataset in node.own_data.df.columns:
             assert self.owner_lookup.get(dataset) is None
             self.owner_lookup[dataset] = node
+        self.generate_tree()
 
     def add_nodes(self, nodes: [Node]):
         for node in nodes:
@@ -49,20 +79,11 @@ class Network:
         for node in self.nodes.values():
             node.tick()
 
-    @property
-    def earliest(self):
-        array = [node.earliest for node in self.nodes.values()]
-        return np.min(np.array(array, dtype=datetime64))
-
-    @property
-    def latest(self):
-        return np.max(np.array([node.latest for node in self.nodes.values()], dtype=datetime64))
-
     def get_intervals(self) -> Dict[str, Tuple[datetime, datetime]]:
         """Returns a datetime interval to be assigned to every node"""
         intervals: (datetime, datetime) = {}
         date_range = pd.date_range(self.earliest, self.latest, len(self.nodes) + 1)
-        for i, node in enumerate(self.get_tree().left_to_right):
+        for i, node in enumerate(self.tree.left_to_right):
             intervals[node.value] = (date_range[i], date_range[i+1])
         return intervals
 

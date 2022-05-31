@@ -1,10 +1,7 @@
-import random
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import numpy as np
 from datetime import datetime
-
-import pandas as pd
 
 from data import TimeSeries, create_dataset
 from words import words
@@ -56,9 +53,8 @@ class Node:
         else:
             self.own_data = data
 
-    # TODO: To simulate keeping data on-premise
-    def send_data(self, dataset: str, to: str):
-        pass
+    def remove_own_data(self, dataset: str):
+        del self.own_data.df[dataset]
 
     def tick(self):
         self.own_data.add_observation()
@@ -77,8 +73,8 @@ class Node:
 
 def random_nodes(nodes_cnt: int,
                  features_cnt: int,
-                 start: datetime = "2000-01-01",
-                 to: datetime = "2000-02-01") -> List[Node]:
+                 start: Union[datetime, str] = "2000-01-01",
+                 to: Union[datetime, str] = "2000-02-01") -> List[Node]:
     nodes: List[Node] = []
     for i in range(nodes_cnt):
         node = Node()
