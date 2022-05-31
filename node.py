@@ -59,6 +59,11 @@ class Node:
     def tick(self):
         self.own_data.add_observation()
 
+    def observations(self, dataset: str) -> float:
+        if self.received_data is None:
+            return 0.0
+        return self.received_data.df.agg(np.count_nonzero)[dataset]
+
     def __str__(self):
         if self.own_data is not None:
             own_data = f"Own data: {self.own_data.datasets} from {self.own_data.earliest} til {self.own_data.latest}"

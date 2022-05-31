@@ -67,6 +67,7 @@ def build_ordered(values: NodeValueList, direction: str = "ltor") -> Optional[In
     return nodes[0] if nodes else None
 
 
+# TODO: Keep tree position of existing nodes, do not reorganize
 def build_balanced(values: NodeValueList, direction: str = "ltor") -> Optional[IntervalTreeNode]:
     nodes = [None if v is None else IntervalTreeNode(v) for v in values]
     root = nodes[0]

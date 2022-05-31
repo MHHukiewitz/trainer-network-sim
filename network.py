@@ -61,6 +61,9 @@ class Network:
     def latest(self):
         return np.max(np.array([node.latest for node in self.nodes.values()], dtype=datetime64))
 
+    def avg_observations(self, dataset: str) -> float:
+        return np.array([node.observations(dataset) for node in self.nodes.values()]).mean()
+
     def add_node(self, node: Node):
         self.nodes[node.name] = node
         for dataset in node.own_data.df.columns:
@@ -74,6 +77,7 @@ class Network:
 
     def remove_node(self, node: str):
         del self.nodes[node]
+        self.generate_tree()
 
     def tick(self):
         for node in self.nodes.values():
