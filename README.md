@@ -9,7 +9,7 @@ This repository is for testing different slicing schemes of time series datasets
 - Visualization of dataset distribution over time
 
 # TODO
-- [ ] Recursively balanced tree building for less data knowledge drift _(as proposed)_
+- [x] Recursively balanced tree building for less data knowledge drift _(as proposed)_
 - [ ] Simulation of adversary nodes trying to undermine privacy guarantees
   - [ ] Simulate colluding node sets
   - [ ] Simulate identity switching nodes
