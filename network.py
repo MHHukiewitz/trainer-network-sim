@@ -85,6 +85,7 @@ class Network:
 
     def get_intervals(self) -> Dict[str, Tuple[datetime, datetime]]:
         """Returns a datetime interval to be assigned to every node"""
+        # TODO: Maybe distribute newer data more thinly than older data?
         intervals: (datetime, datetime) = {}
         date_range = pd.date_range(self.earliest, self.latest, len(self.nodes) + 1)
         for i, node in enumerate(self.tree.left_to_right):

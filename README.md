@@ -10,11 +10,15 @@ This repository is for testing different slicing schemes of time series datasets
 
 # TODO
 - [x] Recursively balanced tree building for less data knowledge drift _(as proposed)_
+- [ ] Implement mitigations for advantageous placement of nodes near the latest data _(highest knowledge drift)_
+- [ ] Calculation of minimal node set having distributed knowledge of a dataset
+- [ ] Performance improvements
 - [ ] Simulation of adversary nodes trying to undermine privacy guarantees
   - [ ] Simulate colluding node sets
   - [ ] Simulate identity switching nodes
   - [ ] Fuzzy exploration of random strategies
   - [ ] Deterministic attack algorithms
-- [ ] Calculation of minimal node set having distributed knowledge of a dataset
-- [ ] Finding satisfactory privacy guarantees under certain network conditions
-- [ ] Finding strategies to enforce privacy-preserving network conditions
+
+# Goal
+- Finding satisfactory privacy guarantees under certain network conditions
+- Finding strategies to enforce privacy-preserving network conditions
