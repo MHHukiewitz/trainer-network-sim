@@ -35,6 +35,8 @@ class IntervalTreeNode(TreeNode):
         left-most leaf. """
         nodes: List["IntervalTreeNode"] = [self.leftmost]
         current = nodes[0]
+        if current.right:
+            nodes.extend(current.right.left_to_right)
         while current.parent:
             if current.parent.left == current:
                 nodes.append(current.parent)
@@ -74,7 +76,7 @@ def build_balanced(values: NodeValueList, direction: str = "ltor") -> Optional[I
     for i in range(1, len(nodes)):
         node = nodes[i]
         if node is not None:
-            parent = find_shallowest_branch(root)
+            parent = find_shallowest_branch(root, direction)
             if direction == "random":
                 direction = random.choice(["ltor", "rtol"])
             if direction == "ltor":
@@ -86,9 +88,24 @@ def build_balanced(values: NodeValueList, direction: str = "ltor") -> Optional[I
     return nodes[0] if nodes else None
 
 
-def find_shallowest_branch(node: IntervalTreeNode) -> IntervalTreeNode:
+def find_shallowest_branch(node: IntervalTreeNode, direction: str = "ltor") -> IntervalTreeNode:
     while node.leaf_count >= 2:
-        if node.left.leaf_count > node.right.leaf_count:
+        if node.left.max_leaf_depth == node.right.max_leaf_depth:
+            if node.left.min_leaf_depth == node.right.min_leaf_depth:
+                if node.left.leaf_count == node.right.leaf_count:
+                    if direction == "ltor":
+                        node = node.left
+                    else:
+                        node = node.right
+                elif node.left.leaf_count > node.right.leaf_count:
+                    node = node.right
+                else:
+                    node = node.left
+            elif node.left.min_leaf_depth > node.right.min_leaf_depth:
+                node = node.right
+            else:
+                node = node.left
+        elif node.left.max_leaf_depth > node.right.max_leaf_depth:
             node = node.right
         else:
             node = node.left
