@@ -77,24 +77,3 @@ class Node:
         else:
             received_data = "No received data."
         return f"Node \"{self.name}\" with\n  {own_data}\n  {received_data}"
-
-
-nodes_created = 0
-
-
-def create_nodes(nodes_cnt: int,
-                 features_cnt: int,
-                 start: Union[datetime, date, str] = "2000-01-01",
-                 to: Union[datetime, date, str] = "2000-02-01") -> List[Node]:
-    global nodes_created
-    nodes: List[Node] = []
-    for i in range(nodes_cnt):
-        if config["enumerate_nodes"]:
-            node = Node(name=f"{nodes_created}")
-            nodes_created += 1
-        else:
-            node = Node()
-        for k in range(features_cnt):
-            node.add_own_data(create_dataset(columns=[f"{node.name}-{k + 1}"], start=start, end=to))
-        nodes.append(node)
-    return nodes

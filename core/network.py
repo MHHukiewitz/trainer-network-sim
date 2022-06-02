@@ -6,8 +6,9 @@ import pandas as pd
 from numpy import datetime64
 from datetime import datetime, date, timedelta
 
-from .data import TimeSeries
-from .node import Node, create_nodes
+from .config import config
+from .data import TimeSeries, create_dataset
+from .node import Node
 from .tree import IntervalTreeNode, build_ordered, build_balanced
 
 
@@ -20,17 +21,19 @@ class TreeType(Enum):
 
 
 class Network:
+    nodes_created: int = 0
+
     nodes: OrderedDict[str, Node]
-    current_date: datetime
+    start_date: datetime
     owner_lookup: Dict[str, Node]
     tree_type: TreeType
 
     _tree: Optional[IntervalTreeNode]
 
     def __init__(self,
-                 current_date: Union[str, datetime64, datetime, date] = datetime.now(),
+                 start_date: Union[str, datetime64, datetime, date] = datetime.now(),
                  tree_type: TreeType = TreeType.balanced_ltor):
-        self.current_date = pd.to_datetime(current_date)
+        self.start_date = pd.to_datetime(start_date)
         self.tree_type = tree_type
         self.nodes = OrderedDict[str, Node]()
         self.owner_lookup = {}
@@ -75,6 +78,28 @@ class Network:
     def add_nodes(self, nodes: [Node]):
         for node in nodes:
             self.add_node(node)
+
+    def create_nodes(self,
+                     nodes_cnt: int,
+                     features_cnt: int,
+                     data_start: Union[datetime, date, str] = None,
+                     data_end: Union[datetime, date, str] = None) -> List[Node]:
+        if data_start is None:
+            data_start = self.start_date
+        if data_end is None:
+            data_end = self.latest
+        nodes: List[Node] = []
+        for i in range(nodes_cnt):
+            if config["enumerate_nodes"]:
+                node = Node(name=f"{self.nodes_created}")
+                self.nodes_created += 1
+            else:
+                node = Node()
+            for k in range(features_cnt):
+                node.add_own_data(create_dataset(columns=[f"{node.name}-{k + 1}"], start=data_start, end=data_end))
+            nodes.append(node)
+        self.add_nodes(nodes)
+        return nodes
 
     def remove_node(self, node: str):
         del self.nodes[node]
@@ -133,7 +158,6 @@ class Network:
 
 def create_network(nodes_cnt: int, days_of_data: int = 30, tree_type: TreeType = TreeType.ordered_ltor) -> Network:
     today = datetime.now().date()
-    net = Network(tree_type=tree_type, current_date=today)
-    nodes = create_nodes(nodes_cnt, 1, start=today, to=today + timedelta(days_of_data))
-    net.add_nodes(nodes)
+    net = Network(tree_type=tree_type, start_date=today)
+    net.create_nodes(nodes_cnt, 1, data_start=today, data_end=today + timedelta(days_of_data))
     return net

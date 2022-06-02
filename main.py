@@ -1,5 +1,4 @@
-from .network import TreeType, create_network
-from .node import create_nodes
+from core.network import TreeType, create_network
 
 
 def main(tree_type: TreeType = TreeType.ordered_ltor):
@@ -15,7 +14,7 @@ def simulate_time(net, tree_type):
         if i % 24 == 23:
             print(f"Iterated {i+1} hours with {len(net.nodes)} nodes...")
         if i % 1 == 0:
-            net.add_nodes(create_nodes(1, 1))
+            net.create_nodes(1, 1)
         # if random.randint(0, 24) == 0:
         #    nodes = list(net.nodes.keys())
         #    nodes.remove(dataset[:-2])
@@ -31,8 +30,8 @@ def simulate_time(net, tree_type):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main(TreeType.ordered_ltor)
+    #main(TreeType.ordered_ltor)
     #main(TreeType.ordered_rtol)
-    #main(TreeType.balanced_ltor)
+    main(TreeType.balanced_ltor)
     #main(TreeType.balanced_rtol)
     #main(TreeType.balanced_random)
