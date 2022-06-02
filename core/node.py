@@ -1,10 +1,11 @@
 from typing import Optional, List, Union
 
 import numpy as np
-from datetime import datetime
+from datetime import datetime, date
 
-from data import TimeSeries, create_dataset
-from words import words
+from .data import TimeSeries, create_dataset
+from .words import words
+from .config import config
 
 
 class Node:
@@ -12,14 +13,16 @@ class Node:
     received_data: Optional[TimeSeries]
     assigned_start: Optional[datetime]
     assigned_end: Optional[datetime]
+    _name: str
 
-    def __init__(self, own_data: TimeSeries = None):
+    def __init__(self, own_data: TimeSeries = None, name: str = None):
         self.own_data = own_data
         self.received_data = None
+        self._name = name
 
     @property
     def name(self):
-        return words[hash(self) % len(words)]
+        return words[hash(self) % len(words)] if self._name is None else self._name
 
     @property
     def freq(self):
@@ -76,13 +79,21 @@ class Node:
         return f"Node \"{self.name}\" with\n  {own_data}\n  {received_data}"
 
 
-def random_nodes(nodes_cnt: int,
+nodes_created = 0
+
+
+def create_nodes(nodes_cnt: int,
                  features_cnt: int,
-                 start: Union[datetime, str] = "2000-01-01",
-                 to: Union[datetime, str] = "2000-02-01") -> List[Node]:
+                 start: Union[datetime, date, str] = "2000-01-01",
+                 to: Union[datetime, date, str] = "2000-02-01") -> List[Node]:
+    global nodes_created
     nodes: List[Node] = []
     for i in range(nodes_cnt):
-        node = Node()
+        if config["enumerate_nodes"]:
+            node = Node(name=f"{nodes_created}")
+            nodes_created += 1
+        else:
+            node = Node()
         for k in range(features_cnt):
             node.add_own_data(create_dataset(columns=[f"{node.name}-{k + 1}"], start=start, end=to))
         nodes.append(node)

@@ -4,11 +4,11 @@ from typing import OrderedDict, Union, Dict, List, Set, Tuple, Optional
 import numpy as np
 import pandas as pd
 from numpy import datetime64
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
-from data import TimeSeries
-from node import Node
-from tree import IntervalTreeNode, build_ordered, build_balanced
+from .data import TimeSeries
+from .node import Node, create_nodes
+from .tree import IntervalTreeNode, build_ordered, build_balanced
 
 
 class TreeType(Enum):
@@ -24,6 +24,7 @@ class Network:
     current_date: datetime
     owner_lookup: Dict[str, Node]
     tree_type: TreeType
+
     _tree: Optional[IntervalTreeNode]
 
     def __init__(self,
@@ -128,3 +129,11 @@ class Network:
                     else:
                         bar += "▒" if (received.loc[index] > 0).all() else "-"
                 print(f"[{data.earliest}]{bar}[{data.latest}] -> {node.name}")
+
+
+def create_network(nodes_cnt: int, days_of_data: int = 30, tree_type: TreeType = TreeType.ordered_ltor) -> Network:
+    today = datetime.now().date()
+    net = Network(tree_type=tree_type, current_date=today)
+    nodes = create_nodes(nodes_cnt, 1, start=today, to=today + timedelta(days_of_data))
+    net.add_nodes(nodes)
+    return net
