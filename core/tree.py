@@ -90,22 +90,12 @@ def build_balanced(values: NodeValueList, direction: str = "ltor") -> Optional[I
 
 def find_shallowest_branch(node: IntervalTreeNode, direction: str = "ltor") -> IntervalTreeNode:
     while node.leaf_count >= 2:
-        if node.left.max_leaf_depth == node.right.max_leaf_depth:
-            if node.left.min_leaf_depth == node.right.min_leaf_depth:
-                if node.left.leaf_count == node.right.leaf_count:
-                    if direction == "ltor":
-                        node = node.left
-                    else:
-                        node = node.right
-                elif node.left.leaf_count > node.right.leaf_count:
-                    node = node.right
-                else:
-                    node = node.left
-            elif node.left.min_leaf_depth > node.right.min_leaf_depth:
-                node = node.right
-            else:
+        if len(node.left.values) == len(node.right.values):
+            if direction == "ltor":
                 node = node.left
-        elif node.left.max_leaf_depth > node.right.max_leaf_depth:
+            else:
+                node = node.right
+        elif len(node.left.values) > len(node.right.values):
             node = node.right
         else:
             node = node.left
