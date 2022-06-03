@@ -65,8 +65,8 @@ class Network:
     def latest(self):
         return np.max(np.array([node.latest for node in self.nodes.values()], dtype=datetime64))
 
-    def avg_observations(self, dataset: str) -> float:
-        return np.array([node.observations(dataset) for node in self.nodes.values()]).mean()
+    def observations(self, dataset: str) -> np.ndarray:
+        return np.array([node.observations(dataset) for node in self.nodes.values()])
 
     def add_node(self, node: Node):
         self.nodes[node.name] = node
@@ -127,6 +127,20 @@ class Network:
     def get_all_dataset_names(self) -> List[str]:
         return list(set(self.owner_lookup.keys()))
 
+    def get_dataset_copies(self, dataset: str) -> pd.DataFrame:
+        df = next(iter(self.nodes.values())).received_data[dataset].df
+        empty = df.copy()
+        empty.values[:] = 0
+        for node in list(self.nodes.values())[1:]:
+            if node.received_data is not None:
+                df = pd.concat([df, node.received_data[dataset].df], axis=1).fillna(0)
+            else:
+                df = pd.concat([df, empty], axis=1).fillna(0)
+        df.applymap(lambda x: np.maximum(x, 1))
+        df = df.div(df)
+        df = df.fillna(0)
+        return df.sum(axis=1)
+
     def distribute_dataset(self, dataset: str):
         """Distributes slices of a dataset"""
         data = self.get_dataset(dataset)
@@ -137,10 +151,10 @@ class Network:
         for node in self.nodes.values():
             print(node)
 
-    def print_dataset_distribution(self, dataset: str):
+    def print_dataset_intervals(self, dataset: str):
         data = self.get_dataset(dataset)
         intervals = self.get_intervals()
-        print(f"Printing distribution of dataset {dataset}")
+        print(f"Printing intervals of dataset {dataset}")
         for node in self.nodes.values():
             if node.received_data is not None:
                 bar = ""
@@ -154,6 +168,26 @@ class Network:
                     else:
                         bar += "▒" if (received.loc[index] > 0).all() else "-"
                 print(f"[{data.earliest}]{bar}[{data.latest}] -> {node.name}")
+
+    def print_dataset_distribution(self, dataset: str):
+        data = self.get_dataset(dataset)
+        df = self.get_dataset_copies(dataset)
+        print(f"Printing distribution of dataset {dataset}")
+        for depth in range(int(df.max()), 0, -1):
+            bar = ""
+            for index in df.index:
+                if (depth <= df.loc[index]).all():
+                    bar += "█"
+                else:
+                    bar += " "
+            print(f"[{data.earliest}]{bar}[{data.latest}] -> {depth} copies")
+
+    def print_statistics(self, dataset: str):
+        obs = self.observations(dataset)
+        total = len(self.get_dataset(dataset))
+        print(f"Minimum amount of ticks observed: {obs.min(): .2f} of {total} ({100 * obs.min() / total: .1f} %)")
+        print(f"Average amount of ticks observed: {obs.mean(): .2f} of {total} ({100 * obs.mean() / total: .1f} %)")
+        print(f"Maximum amount of ticks observed: {obs.max(): .2f} of {total} ({100 * obs.max() / total: .1f} %)")
 
 
 def create_network(nodes_cnt: int, days_of_data: int = 30, tree_type: TreeType = TreeType.ordered_ltor) -> Network:
