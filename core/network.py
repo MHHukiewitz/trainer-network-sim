@@ -190,8 +190,10 @@ class Network:
         print(f"Maximum amount of ticks observed: {obs.max(): .2f} of {total} ({100 * obs.max() / total: .1f} %)")
 
 
-def create_network(nodes_cnt: int, days_of_data: int = 30, tree_type: TreeType = TreeType.ordered_ltor) -> Network:
+def create_network(nodes_cnt: int, days_of_data: int = None, tree_type: TreeType = TreeType.ordered_ltor) -> Network:
     today = datetime.now().date()
+    if days_of_data is None:
+        days_of_data = nodes_cnt
     net = Network(tree_type=tree_type, start_date=today)
     net.create_nodes(nodes_cnt, 1, data_start=today, data_end=today + timedelta(days_of_data))
     return net
