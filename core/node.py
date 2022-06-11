@@ -1,21 +1,20 @@
-from typing import Optional, List, Union
+from typing import Optional
 
 import numpy as np
 from datetime import datetime, date
 
-from .data import TimeSeries, create_dataset
+from .data import DailySeries
 from .words import words
-from .config import config
 
 
 class Node:
-    own_data: Optional[TimeSeries]
-    received_data: Optional[TimeSeries]
+    own_data: Optional[DailySeries]
+    received_data: Optional[DailySeries]
     assigned_start: Optional[datetime]
     assigned_end: Optional[datetime]
     _name: str
 
-    def __init__(self, own_data: TimeSeries = None, name: str = None):
+    def __init__(self, own_data: DailySeries = None, name: str = None):
         self.own_data = own_data
         self.received_data = None
         self._name = name
@@ -25,47 +24,40 @@ class Node:
         return words[hash(self) % len(words)] if self._name is None else self._name
 
     @property
-    def freq(self):
-        # For simplicity reasons, assert that freq is everywhere the same
-        if self.own_data and self.received_data:
-            assert self.own_data.freq == self.received_data.freq
-        return self.own_data.freq
-
-    @property
     def earliest(self):
-        earliest = np.min(np.array([self.own_data.earliest if self.own_data else datetime.max,
-                                    self.received_data.earliest if self.received_data else datetime.max],
+        earliest = np.min(np.array([self.own_data.earliest if self.own_data is not None else datetime.max,
+                                    self.received_data.earliest if self.received_data is not None else datetime.max],
                                    dtype='datetime64'))
         return earliest
 
     @property
     def latest(self):
-        return np.max(np.array([self.own_data.latest if self.own_data else datetime.min,
-                                self.received_data.latest if self.received_data else datetime.min],
+        return np.max(np.array([self.own_data.latest if self.own_data is not None else datetime.min,
+                                self.received_data.latest if self.received_data is not None else datetime.min],
                                dtype='datetime64'))
 
-    def receive_data(self, data: TimeSeries):
-        if self.received_data:
+    def receive_data(self, data: DailySeries):
+        if self.received_data is not None:
             self.received_data = self.received_data + data
         else:
-            self.received_data = data.__copy__()
+            self.received_data = DailySeries(data.__copy__())
 
-    def add_own_data(self, data: TimeSeries):
-        if self.own_data:
+    def add_own_data(self, data: DailySeries):
+        if self.own_data is not None:
             self.own_data = self.own_data + data
         else:
             self.own_data = data
 
     def remove_own_data(self, dataset: str):
-        del self.own_data.df[dataset]
+        del self.own_data[dataset]
 
-    def tick(self):
-        self.own_data.add_observation()
+    def tick(self, day: date):
+        self.own_data.add_observation(day)
 
     def observations(self, dataset: str) -> float:
         if self.received_data is None:
             return 0.0
-        return self.received_data.df.agg(np.count_nonzero)[dataset]
+        return self.received_data.agg(np.count_nonzero)[dataset]
 
     def __str__(self):
         if self.own_data is not None:
