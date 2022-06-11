@@ -1,4 +1,3 @@
-import random
 import numpy as np
 from datetime import timedelta
 

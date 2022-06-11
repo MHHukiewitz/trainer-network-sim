@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import OrderedDict, Union, Dict, List, Set, Tuple, Optional
+from typing import OrderedDict, Union, Dict, List, Tuple, Optional
 
 import numpy as np
 import pandas as pd
@@ -158,7 +158,7 @@ class Network:
         for receiver, (start, end) in self.get_intervals().items():
             self.nodes[receiver].receive_data(timeseries[start:end])
 
-    def allocate_dataframes(self, start: datetime, end: datetime):
+    def allocate_dataframes(self, start: date, end: date):
         for node in self.nodes.values():
             node.received_data.extend_to_date(start, end, inplace=True)
             node.own_data.extend_to_date(start, end, inplace=True)
@@ -170,7 +170,7 @@ class Network:
     def print_dataset_intervals(self, dataset: str):
         series = self.get_daily_series(dataset)
         intervals = self.get_intervals()
-        print(f"Printing intervals of dataset {dataset}")
+        print(f"\nPrinting intervals of dataset {dataset}")
         for node in self.nodes.values():
             if node.received_data is not None:
                 bar = ""
@@ -188,7 +188,7 @@ class Network:
     def print_dataset_distribution(self, dataset: str):
         data = self.get_daily_series(dataset)
         df = self.get_dataset_copies(dataset)
-        print(f"Printing distribution of dataset {dataset}")
+        print(f"\nPrinting distribution of dataset {dataset}")
         for depth in range(int(df.max()), 0, -1):
             bar = ""
             for index in df.index:
@@ -201,6 +201,8 @@ class Network:
     def print_statistics(self, dataset: str):
         obs = self.observations(dataset)
         total = len(self.get_daily_series(dataset))
+        print(f"\nTotal nodes: {len(self.nodes)}")
+        print(f"Total slices: {total}")
         print(f"Minimum amount of ticks observed: {obs.min(): .2f} of {total} ({100 * obs.min() / total: .1f} %)")
         print(f"Average amount of ticks observed: {obs.mean(): .2f} of {total} ({100 * obs.mean() / total: .1f} %)")
         print(f"Maximum amount of ticks observed: {obs.max(): .2f} of {total} ({100 * obs.max() / total: .1f} %)")
@@ -210,6 +212,6 @@ def create_network(nodes_cnt: int, days_of_data: int = None, tree_type: TreeType
     today = datetime.now().date()
     if days_of_data is None:
         days_of_data = nodes_cnt
-    net = Network(tree_type=tree_type, start_date=today + timedelta(days_of_data))
+    net = Network(tree_type=tree_type, start_date=today, current_date=today + timedelta(days_of_data))
     net.create_nodes(nodes_cnt, 1, data_start=today, data_end=today + timedelta(days_of_data))
     return net
